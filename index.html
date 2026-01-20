@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Central Survival</title>
-    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -26,12 +26,24 @@
             overflow: hidden;
         }
 
+        .main-content {
+            filter: blur(8px);
+            transition: filter 0.6s ease;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
         .menu-container {
             text-align: center;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 80px;
+            position: relative;
+            z-index: 1;
         }
 
         .title {
@@ -102,6 +114,7 @@
             position: absolute;
             top: 30px;
             left: 30px;
+            z-index: 10;
         }
 
         .settings-button {
@@ -181,16 +194,76 @@
             background-color: #fff;
             color: #000;
         }
+
+        /* Écran d'entrée blur */
+        .entry-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            cursor: pointer;
+            transition: all 0.6s ease;
+        }
+
+        .entry-screen.hidden {
+            opacity: 0;
+            backdrop-filter: blur(0px);
+            -webkit-backdrop-filter: blur(0px);
+            pointer-events: none;
+        }
+
+        .entry-text {
+            font-family: 'Roboto', sans-serif;
+            font-size: 32px;
+            font-weight: 300;
+            color: #fff;
+            letter-spacing: 2px;
+            opacity: 0.9;
+            transition: opacity 0.3s ease;
+        }
+
+        .entry-screen:hover .entry-text {
+            opacity: 1;
+        }
+
+        .main-content {
+            filter: blur(8px);
+            transition: filter 0.6s ease;
+        }
+
+        .main-content.unblurred {
+            filter: blur(0px);
+        }
+
+        @media (max-width: 768px) {
+            .entry-text {
+                font-size: 24px;
+            }
+        }
     </style>
 </head>
 <body>
-    <audio id="menuMusic" loop>
-        <source src="herecomethesun.mp3" type="audio/mpeg">
-    </audio>
+    <!-- Écran d'entrée blur -->
+    <div id="entryScreen" class="entry-screen" onclick="enterGame()">
+        <div class="entry-text">Click to enter</div>
+    </div>
 
-    <audio id="gameMusic" loop>
-        <source src="sonusine.mp3" type="audio/mpeg">
-    </audio>
+    <div id="mainContent" class="main-content">
+        <audio id="menuMusic" loop>
+            <source src="herecomethesun.mp3" type="audio/mpeg">
+        </audio>
+
+        <audio id="gameMusic" loop>
+            <source src="sonusine.mp3" type="audio/mpeg">
+        </audio>
 
     <div class="settings-container">
         <button class="settings-button" onclick="toggleSettings()">
@@ -221,35 +294,31 @@
         let settingsOpen = false;
         let soundOn = true;
         let language = 'français';
-        let musicStarted = false;
+        let gameEntered = false;
         const menuMusic = document.getElementById('menuMusic');
         const gameMusic = document.getElementById('gameMusic');
+        const entryScreen = document.getElementById('entryScreen');
 
-        // Fonction pour démarrer la musique
-        function startMenuMusic() {
-            if (!musicStarted && soundOn) {
+        // Fonction appelée quand on clique sur "Click to enter"
+        function enterGame() {
+            if (!gameEntered) {
+                gameEntered = true;
+                
+                // Démarrer la musique du menu
                 menuMusic.volume = 1;
                 menuMusic.play().then(() => {
-                    musicStarted = true;
-                    console.log('Musique démarrée');
+                    console.log('Musique du menu démarrée');
                 }).catch(e => {
-                    console.log('Erreur lecture musique:', e);
+                    console.log('Erreur:', e);
                 });
+                
+                // Déflouter le contenu principal
+                document.getElementById('mainContent').classList.add('unblurred');
+                
+                // Faire disparaître l'écran d'entrée
+                entryScreen.classList.add('hidden');
             }
         }
-
-        // Démarrer la musique au chargement
-        window.addEventListener('load', startMenuMusic);
-
-        // Démarrer au premier clic/toucher sur la page
-        const startOnInteraction = () => {
-            startMenuMusic();
-            document.removeEventListener('click', startOnInteraction);
-            document.removeEventListener('touchstart', startOnInteraction);
-        };
-        
-        document.addEventListener('click', startOnInteraction);
-        document.addEventListener('touchstart', startOnInteraction);
 
         function toggleSettings() {
             settingsOpen = !settingsOpen;
@@ -264,9 +333,7 @@
         function toggleSound() {
             soundOn = !soundOn;
             if (soundOn) {
-                if (!musicStarted) {
-                    startMenuMusic();
-                } else {
+                if (gameEntered && menuMusic.paused) {
                     menuMusic.play();
                 }
                 if (gameMusic.currentTime > 0) {
