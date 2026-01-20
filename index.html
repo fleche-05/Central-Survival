@@ -221,23 +221,35 @@
         let settingsOpen = false;
         let soundOn = true;
         let language = 'français';
+        let musicStarted = false;
         const menuMusic = document.getElementById('menuMusic');
         const gameMusic = document.getElementById('gameMusic');
 
-        // Démarrer la musique du menu au chargement de la page
-        window.addEventListener('load', () => {
-            menuMusic.play().catch(e => {
-                // Si l'autoplay est bloqué par le navigateur, on attend une interaction
-                console.log('Autoplay bloqué, la musique démarrera après une interaction');
-            });
-        });
-
-        // Démarrer la musique au premier clic si elle n'a pas pu démarrer automatiquement
-        document.addEventListener('click', () => {
-            if (menuMusic.paused && soundOn) {
-                menuMusic.play();
+        // Fonction pour démarrer la musique
+        function startMenuMusic() {
+            if (!musicStarted && soundOn) {
+                menuMusic.volume = 1;
+                menuMusic.play().then(() => {
+                    musicStarted = true;
+                    console.log('Musique démarrée');
+                }).catch(e => {
+                    console.log('Erreur lecture musique:', e);
+                });
             }
-        }, { once: true });
+        }
+
+        // Démarrer la musique au chargement
+        window.addEventListener('load', startMenuMusic);
+
+        // Démarrer au premier clic/toucher sur la page
+        const startOnInteraction = () => {
+            startMenuMusic();
+            document.removeEventListener('click', startOnInteraction);
+            document.removeEventListener('touchstart', startOnInteraction);
+        };
+        
+        document.addEventListener('click', startOnInteraction);
+        document.addEventListener('touchstart', startOnInteraction);
 
         function toggleSettings() {
             settingsOpen = !settingsOpen;
@@ -252,7 +264,11 @@
         function toggleSound() {
             soundOn = !soundOn;
             if (soundOn) {
-                menuMusic.play();
+                if (!musicStarted) {
+                    startMenuMusic();
+                } else {
+                    menuMusic.play();
+                }
                 if (gameMusic.currentTime > 0) {
                     gameMusic.play();
                 }
@@ -313,9 +329,6 @@
             }
             
             // Ici vous pouvez ajouter la logique pour lancer le jeu
-            setTimeout(() => {
-                alert('Le jeu démarre avec la musique d\'usine en fond !');
-            }, 2000);
         }
     </script>
 </body>
