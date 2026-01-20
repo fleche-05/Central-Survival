@@ -304,13 +304,18 @@
             if (!gameEntered) {
                 gameEntered = true;
                 
-                // Démarrer la musique du menu
+                // Démarrer la musique du menu avec gestion d'erreur détaillée
                 menuMusic.volume = 1;
-                menuMusic.play().then(() => {
-                    console.log('Musique du menu démarrée');
-                }).catch(e => {
-                    console.log('Erreur:', e);
-                });
+                const playPromise = menuMusic.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        console.log('Musique du menu démarrée avec succès');
+                    }).catch(e => {
+                        console.error('Erreur de lecture audio:', e);
+                        console.log('Vérifiez que le fichier herecomethesun.mp3 existe dans le bon dossier');
+                    });
+                }
                 
                 // Déflouter le contenu principal
                 document.getElementById('mainContent').classList.add('unblurred');
