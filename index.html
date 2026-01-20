@@ -10,6 +10,10 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
         }
 
         body {
@@ -180,6 +184,14 @@
     </style>
 </head>
 <body>
+    <audio id="menuMusic" loop>
+        <source src="herecomethesun.mp3" type="audio/mpeg">
+    </audio>
+
+    <audio id="gameMusic" loop>
+        <source src="sonusine.mp3" type="audio/mpeg">
+    </audio>
+
     <div class="settings-container">
         <button class="settings-button" onclick="toggleSettings()">
             <svg viewBox="0 0 24 24">
@@ -209,6 +221,23 @@
         let settingsOpen = false;
         let soundOn = true;
         let language = 'français';
+        const menuMusic = document.getElementById('menuMusic');
+        const gameMusic = document.getElementById('gameMusic');
+
+        // Démarrer la musique du menu au chargement de la page
+        window.addEventListener('load', () => {
+            menuMusic.play().catch(e => {
+                // Si l'autoplay est bloqué par le navigateur, on attend une interaction
+                console.log('Autoplay bloqué, la musique démarrera après une interaction');
+            });
+        });
+
+        // Démarrer la musique au premier clic si elle n'a pas pu démarrer automatiquement
+        document.addEventListener('click', () => {
+            if (menuMusic.paused && soundOn) {
+                menuMusic.play();
+            }
+        }, { once: true });
 
         function toggleSettings() {
             settingsOpen = !settingsOpen;
@@ -222,6 +251,15 @@
 
         function toggleSound() {
             soundOn = !soundOn;
+            if (soundOn) {
+                menuMusic.play();
+                if (gameMusic.currentTime > 0) {
+                    gameMusic.play();
+                }
+            } else {
+                menuMusic.pause();
+                gameMusic.pause();
+            }
             updateSoundButton();
         }
 
@@ -248,9 +286,36 @@
             }
         }
 
+        function fadeOutMusic(audioElement, duration) {
+            const steps = 50;
+            const stepTime = duration / steps;
+            const volumeStep = audioElement.volume / steps;
+            
+            const fadeInterval = setInterval(() => {
+                if (audioElement.volume > volumeStep) {
+                    audioElement.volume -= volumeStep;
+                } else {
+                    audioElement.volume = 0;
+                    audioElement.pause();
+                    clearInterval(fadeInterval);
+                }
+            }, stepTime);
+        }
+
         function startGame() {
-            alert('Le jeu va démarrer !');
+            // Fondu de 2 secondes pour la musique du menu
+            fadeOutMusic(menuMusic, 2000);
+            
+            // Démarrer la musique du jeu si le son est activé
+            if (soundOn) {
+                gameMusic.volume = 1;
+                gameMusic.play();
+            }
+            
             // Ici vous pouvez ajouter la logique pour lancer le jeu
+            setTimeout(() => {
+                alert('Le jeu démarre avec la musique d\'usine en fond !');
+            }, 2000);
         }
     </script>
 </body>
